@@ -17,7 +17,6 @@ module.exports = (Sequelize, DataTypes) => {
       allowNull: false,
       unique: true,
       validate: {
-        notEmpty: true,
         isEmail: true,
       },
     },
