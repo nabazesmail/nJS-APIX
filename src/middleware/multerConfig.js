@@ -1,4 +1,3 @@
-//jshint esversion:10
 
 const multer = require('multer');
 const path = require('path');

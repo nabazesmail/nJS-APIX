@@ -1,5 +1,6 @@
 const UserService = require('../services/UserService');
 const userService = new UserService();
+const {getUserInfoFromToken} = require('../middleware/authenticate');
 
 const {
   generateToken
@@ -40,7 +41,11 @@ class UserController {
     }
 
     const token = generateToken({
-      role: user.role
+      id: user.id,
+      role: user.role,
+      fullName: user.full_name,
+      email: user.email,
+      profileImage: user.profile_image
     });
 
     res.json({
@@ -68,7 +73,6 @@ class UserController {
     }
   }
 
-
   async removeProfilePicture(req, res) {
     try {
       const userId = req.params.userId;
@@ -83,6 +87,10 @@ class UserController {
     }
   }
 
+  async getProfile(req, res) {
+    const userInfo = getUserInfoFromToken(req.headers.authorization.split(' ')[1]);
+    res.json(userInfo);
+  }
 }
 
 

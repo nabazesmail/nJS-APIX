@@ -1,4 +1,6 @@
-const { User } = require('../models');
+const {
+  User
+} = require('../models');
 
 class UserRepository {
 
@@ -7,28 +9,52 @@ class UserRepository {
   }
 
   async getUserById(id) {
-    return await User.findByPk(id);
+    try {
+      return await User.findByPk(id);
+    } catch (error) {
+      console.error('Failed to get user by ID:', error);
+      throw new Error('Failed to get user by ID');
+    }
   }
+
 
   async getUsers() {
     return await User.findAll();
   }
 
   async updateUser(id, data) {
-    await User.update(data, { where: { id } });
+    await User.update(data, {
+      where: {
+        id
+      }
+    });
     return await User.findByPk(id);
   }
 
   async deleteUser(id) {
-    await User.destroy({ where: { id } });
+    await User.destroy({
+      where: {
+        id
+      }
+    });
   }
 
   async getUserByEmail(email) {
-    return await User.findOne({ where: { email } });
+    return await User.findOne({
+      where: {
+        email
+      }
+    });
   }
 
   async updateUserProfilePicture(id, profileImage) {
-    await User.update({ profile_image: profileImage }, { where: { id } });
+    await User.update({
+      profile_image: profileImage
+    }, {
+      where: {
+        id
+      }
+    });
   }
 
 }

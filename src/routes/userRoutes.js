@@ -1,7 +1,7 @@
 const express = require('express');
 const UserController = require('../controllers/UserController');
 const userController = new UserController();
-const authenticate = require('../middleware/authenticate');
+const {authenticate} = require('../middleware/authenticate');
 const checkAccess = require('../middleware/checkAccess');
 const upload = require('../middleware/multerConfig');
 const router = express.Router();
@@ -13,8 +13,11 @@ router.post('/login', userController.login);
 // Route for authenticating user
 router.use(authenticate);
 
+// Route for getting user profile
+router.get('/profile', userController.getProfile);
+
 // Route for uploading profile picture
-router.post('/upload/:userId',checkAccess('admin'), upload.single('profileImage'), userController.uploadProfilePicture);
+router.post('/upload/:userId', checkAccess('admin'), upload.single('profileImage'), userController.uploadProfilePicture);
 
 // Route for removing profile picture
 router.delete('/remove-pic/:userId', checkAccess('admin'), userController.removeProfilePicture);

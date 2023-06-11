@@ -15,6 +15,7 @@ const authenticate = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = {
       role: decoded.role,
+      userId: decoded.userId,
     };
     next();
   } catch (err) {
@@ -24,4 +25,20 @@ const authenticate = (req, res, next) => {
   }
 };
 
-module.exports = authenticate;
+const getUserInfoFromToken = (token) => {
+  try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return {
+          fullName: decoded.fullName,
+          email: decoded.email,
+          role: decoded.role,
+          profileImage: decoded.profileImage
+      };
+  } catch (error) {
+      // Handle invalid token or other errors
+      throw new Error('Failed to get user information from token.');
+  }
+};
+
+
+module.exports = {authenticate, getUserInfoFromToken};
