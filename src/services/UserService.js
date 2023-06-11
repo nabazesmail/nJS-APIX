@@ -112,6 +112,26 @@ class UserService {
     }
   }
 
+  async getProfilePicture(userId) {
+    try {
+      const user = await userRepository.getUserById(userId);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const profilePicture = user.profile_image;
+
+      if (!profilePicture) {
+        return null;
+      }
+
+      return profilePicture;
+    } catch (error) {
+      console.error('Failed to get profile picture:', error);
+      throw new Error('Failed to get profile picture');
+    }
+  }
 
   async updateUserProfilePicture(id, profileImage) {
     try {

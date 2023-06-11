@@ -1,6 +1,7 @@
 const UserService = require('../services/UserService');
 const userService = new UserService();
 const {getUserInfoFromToken} = require('../middleware/authenticate');
+const path = require('path');
 
 const {
   generateToken
@@ -70,6 +71,23 @@ class UserController {
     } catch (err) {
       console.error('Error: ' + err);
       res.send('Error: ' + err);
+    }
+  }
+
+  async getProfilePicture(req, res) {
+    try {
+      const userId = req.params.userId;
+      const profilePicture = await userService.getProfilePicture(userId);
+
+      if (!profilePicture) {
+        return res.status(404).json({ message: 'Profile picture not found' });
+      }
+
+      const absolutePath = path.join(__dirname, '..', 'public', profilePicture);
+      res.sendFile(absolutePath);
+    } catch (error) {
+      console.error('Error getting profile picture:', error);
+      res.status(500).json({ error: 'Failed to get profile picture' });
     }
   }
 

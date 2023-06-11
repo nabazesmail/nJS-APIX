@@ -19,6 +19,9 @@ router.get('/profile', userController.getProfile);
 // Route for uploading profile picture
 router.post('/upload/:userId', checkAccess('admin'), upload.single('profileImage'), userController.uploadProfilePicture);
 
+// Route for getting profile picture
+router.get('/profile-picture/:userId', userController.getProfilePicture);
+
 // Route for removing profile picture
 router.delete('/remove-pic/:userId', checkAccess('admin'), userController.removeProfilePicture);
 
