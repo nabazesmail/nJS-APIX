@@ -2,6 +2,7 @@ const express = require('express');
 const UserController = require('../controllers/UserController');
 const userController = new UserController();
 const {authenticate} = require('../middleware/authenticate');
+const loggerMiddleware = require('../middleware/Logger');
 const checkAccess = require('../middleware/checkAccess');
 const upload = require('../middleware/multerConfig');
 const router = express.Router();
@@ -12,6 +13,9 @@ router.post('/login', userController.login);
 
 // Route for authenticating user
 router.use(authenticate);
+
+// Route for logging requests
+router.use(loggerMiddleware);
 
 // Route for getting user profile
 router.get('/profile', userController.getProfile);

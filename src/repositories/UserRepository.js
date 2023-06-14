@@ -17,7 +17,6 @@ class UserRepository {
     }
   }
 
-
   async getUsers() {
     return await User.findAll();
   }

@@ -1,46 +1,14 @@
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
 const path = require('path');
-const bcrypt = require('bcrypt');
-const {
-  isEmailValid,
-  isPasswordValid
-} = require('../Validation/validation');
 
 class UserService {
   async createUser(data) {
-    const {
-      email,
-      password
-    } = data;
-
     try {
-      // Email validation
-      if (!isEmailValid(email)) {
-        throw new Error('Invalid email format');
-      }
-
-      // Password validation
-      if (!isPasswordValid(password)) {
-        throw new Error('Invalid password format');
-      }
-
-      try {
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create the user with the hashed password
-        return await userRepository.createUser({
-          ...data,
-          password: hashedPassword
-        });
-      } catch (error) {
-        console.error('Failed to create user:', error);
-        throw new Error('Failed to create user');
-      }
+      return await userRepository.createUser(data);
     } catch (error) {
-      console.error('Email validation error:', error.message);
-      throw new Error('Invalid email format');
+      console.error('Error creating user:', error);
+      throw new Error('Failed to create user');
     }
   }
 
@@ -82,19 +50,20 @@ class UserService {
   }
 
   async login(email, password) {
-  try {
-    const user = await userRepository.getUserByEmail(email);
+    try {
+      const user = await userRepository.getUserByEmail(email);
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid credentials');
+      if (!user) {
+        throw new Error('Invalid credentials');
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Failed to login:', error);
+      throw new Error('Failed to login');
     }
-
-    return user;
-  } catch (error) {
-    console.error('Failed to login:', error);
-    throw new Error('Failed to login');
   }
-}
+
 
 
   async uploadProfilePicture(id, file) {

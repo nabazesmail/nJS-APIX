@@ -1,3 +1,6 @@
+'use strict';
+
+const bcrypt = require('bcrypt');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -10,18 +13,11 @@ module.exports = {
       full_name: {
         type: Sequelize.STRING,
         allowNull: false,
-        validate: {
-          notEmpty: true,
-        },
       },
       email: {
         type: Sequelize.STRING,
         allowNull: false,
         unique: true,
-        validate: {
-          notEmpty: true,
-          isEmail: true,
-        },
       },
       password: {
         type: Sequelize.STRING,
@@ -45,6 +41,15 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
+
+    const users = await queryInterface.sequelize.query('SELECT id, password FROM Users');
+    if (users[0].length > 0) {
+      const updatedUsers = users[0].map(async (user) => {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        return queryInterface.sequelize.query(`UPDATE Users SET password = '${hashedPassword}' WHERE id = ${user.id}`);
+      });
+      await Promise.all(updatedUsers);
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

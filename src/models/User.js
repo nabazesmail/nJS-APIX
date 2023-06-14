@@ -1,5 +1,7 @@
+const bcrypt = require('bcrypt');
+
 module.exports = (Sequelize, DataTypes) => {
-  const users = Sequelize.define('User', {
+  const User = Sequelize.define('User', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -8,24 +10,31 @@ module.exports = (Sequelize, DataTypes) => {
     full_name: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        msg: 'Email address must be unique',
+      },
       validate: {
-        isEmail: true,
+        isEmail: {
+          msg: 'Email address must be valid',
+        },
       },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        len: {
+          args: [8, 15],
+          msg: 'Password must have between 8 and 15 characters',
+        },
+      },
     },
     profile_image: {
-      type: DataTypes.STRING, // Store the path or URL of the profile image
+      type: DataTypes.STRING,
     },
     role: {
       type: DataTypes.ENUM('admin', 'user'),
@@ -33,8 +42,17 @@ module.exports = (Sequelize, DataTypes) => {
     },
   });
 
-  // Sync the model with the database
-  users.sync();
+  User.beforeCreate(async (user) => {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    user.password = hashedPassword;
+  });
 
-  return users;
+  User.beforeUpdate(async (user) => {
+    if (user.changed('password')) {
+      const hashedPassword = await bcrypt.hash(user.password, 10);
+      user.password = hashedPassword;
+    }
+  });
+
+  return User;
 };
