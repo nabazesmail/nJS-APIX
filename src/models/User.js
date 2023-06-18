@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 
-module.exports = (Sequelize, DataTypes) => {
-  const User = Sequelize.define('User', {
+module.exports = (sequelize, DataTypes) => {
+  const User = sequelize.define('User', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -41,6 +41,10 @@ module.exports = (Sequelize, DataTypes) => {
       defaultValue: 'user',
     },
   });
+
+  User.associate = (models) => {
+    User.hasOne(models.Details, { foreignKey: 'userId' });
+  };
 
   User.beforeCreate(async (user) => {
     const hashedPassword = await bcrypt.hash(user.password, 10);

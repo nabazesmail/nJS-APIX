@@ -1,13 +1,40 @@
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
 const path = require('path');
+const {
+  sequelize,
+  User,
+  Details
+} = require('../models');
 
 class UserService {
   async createUser(data) {
+    let transaction;
+
     try {
-      return await userRepository.createUser(data);
+      transaction = await sequelize.transaction();
+
+      const user = await User.create(data, {
+        transaction
+      });
+
+      const detailsData = {
+        userId: user.id,
+        status: data.status
+      };
+
+      await Details.create(detailsData, {
+        transaction
+      });
+
+      await transaction.commit();
+
+      return user;
     } catch (error) {
-      console.error('Error creating user:', error);
+      if (transaction) {
+        await transaction.rollback();
+      }
+      console.error('Failed to create user:', error);
       throw new Error('Failed to create user');
     }
   }
