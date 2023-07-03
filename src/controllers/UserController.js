@@ -59,6 +59,7 @@ class UserController {
       const userId = req.params.userId; // retrieve user ID from route parameter
       const file = req.file;
 
+      console.log(file.path);
       if (!file) {
         return res.status(400).json({
           message: 'No file uploaded'
@@ -83,11 +84,46 @@ class UserController {
         return res.status(404).json({ message: 'Profile picture not found' });
       }
 
-      const absolutePath = path.join(__dirname, '..', 'public', profilePicture);
+      const absolutePath = path.join(__dirname, '..', 'public/img', profilePicture);
       res.sendFile(absolutePath);
     } catch (error) {
       console.error('Error getting profile picture:', error);
       res.status(500).json({ error: 'Failed to get profile picture' });
+    }
+  }
+
+  async getProfilePicPath(req, res) {
+    try {
+      const userId = req.params.userId;
+      const user = await userService.getUserById(userId); // Get the user object
+
+      if (!user) {
+        return res.status(404).json({
+          message: 'User not found'
+        });
+      }
+
+
+      const profilePicture = user.profile_image;
+
+      if (!profilePicture) {
+        return res.status(404).json({
+          message: 'Profile picture not found'
+        });
+      }
+
+      const picPath=path.join(__dirname, '..', 'public/img', profilePicture);
+      console.log(picPath);
+      const serverUrl = "http://localhost:3000/public/img/";
+      // Send the image file in the response
+      res.status(200).json({
+        path: serverUrl + profilePicture,
+      });
+    } catch (error) {
+      console.error('Error getting profile picture:', error);
+      res.status(500).json({
+        error: 'Failed to get profile picture'
+      });
     }
   }
 

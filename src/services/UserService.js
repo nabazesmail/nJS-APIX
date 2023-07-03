@@ -39,7 +39,6 @@ class UserService {
     }
   }
 
-
   async getUserById(id) {
     try {
       return await userRepository.getUserById(id);
@@ -91,8 +90,6 @@ class UserService {
     }
   }
 
-
-
   async uploadProfilePicture(id, file) {
     try {
       // Validate file
@@ -100,7 +97,7 @@ class UserService {
         throw new Error('Invalid file');
       }
 
-      const profileImage = path.join('/img/', file.filename);
+      const profileImage = file.filename;
       await userRepository.updateUserProfilePicture(id, profileImage);
     } catch (error) {
       console.error('Failed to upload profile picture:', error);
