@@ -78,9 +78,30 @@ class UserService {
     });
   }
 
-  async getUsers() {
+  async getUsers(resetCache = false) {
+    const cacheKey = 'users';
+
     try {
-      return await userRepository.getUsers();
+      // If resetCache is true, delete the users cache
+      if (resetCache) {
+        await this.redisClient.del(cacheKey);
+      }
+
+      // Check if the users are available in the Redis cache
+      const cachedUsers = await this.redisClient.get(cacheKey);
+      if (cachedUsers) {
+        console.log('Fetched users from cache');
+        return JSON.parse(cachedUsers);
+      }
+
+      // If not available in cache, fetch the users from the database
+      const users = await userRepository.getUsers();
+
+      // Cache the users in Redis
+      await this.redisClient.set(cacheKey, JSON.stringify(users));
+
+      console.log('Fetched users from database');
+      return users;
     } catch (error) {
       console.error('Failed to get users:', error);
       throw new Error('Failed to get users');
@@ -88,16 +109,50 @@ class UserService {
   }
 
   async updateUser(id, data) {
+    let transaction;
+
     try {
-      return await userRepository.updateUser(id, data);
+      transaction = await sequelize.transaction();
+
+      const user = await userRepository.updateUser(id, data, {
+        transaction
+      });
+
+      // Update the user data in the cache
+      this.redisClient.get(`user:${id}`, (err, cachedData) => {
+        if (err) {
+          console.error('Failed to fetch user from Redis cache:', err);
+        }
+
+        if (cachedData) {
+          const cachedUser = JSON.parse(cachedData);
+          // Update the cached user data with the updated data
+          const updatedUser = {
+            ...cachedUser,
+            ...data
+          };
+          this.redisClient.set(`user:${id}`, JSON.stringify(updatedUser));
+        }
+      });
+
+      await transaction.commit();
+
+      return user;
     } catch (error) {
+      if (transaction) {
+        await transaction.rollback();
+      }
       console.error('Failed to update user:', error);
       throw new Error('Failed to update user');
     }
   }
 
+
   async deleteUser(id) {
     try {
+      // Clear user cache for the deleted user
+      await this.redisClient.del(`user:${id}`);
+
       await userRepository.deleteUser(id);
     } catch (error) {
       console.error('Failed to delete user:', error);
@@ -106,13 +161,23 @@ class UserService {
   }
 
   async login(email, password) {
-    try {
-      const user = await userRepository.getUserByEmail(email);
+    const cacheKey = `user:${email}`;
 
-      if (!user) {
-        throw new Error('Invalid credentials');
+    try {
+      // Check if the user is available in the Redis cache
+      const cachedUser = await this.redisClient.get(cacheKey);
+      if (cachedUser) {
+        console.log('Fetched user from cache for Login');
+        return JSON.parse(cachedUser);
       }
 
+      // If not available in cache, fetch the user from the database
+      const user = await userRepository.getUserByEmail(email);
+
+      // Cache the user in Redis
+      await this.redisClient.set(cacheKey, JSON.stringify(user));
+
+      console.log('Fetched user from database for Login');
       return user;
     } catch (error) {
       console.error('Failed to login:', error);

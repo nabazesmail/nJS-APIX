@@ -1,5 +1,5 @@
 const {
-  User
+  User,Details
 } = require('../models');
 
 class UserRepository {
@@ -33,11 +33,24 @@ class UserRepository {
   }
 
   async deleteUser(id) {
-    await User.destroy({
-      where: {
-        id
-      }
-    });
+    try {
+      // Delete associated records in the `details` table
+      await Details.destroy({
+        where: {
+          userId: id
+        }
+      });
+
+      // Delete the user
+      await User.destroy({
+        where: {
+          id
+        }
+      });
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      throw new Error('Failed to delete user');
+    }
   }
 
   async getUserByEmail(email) {
