@@ -10,7 +10,9 @@ class UserRepository {
 
   async getUserById(id) {
     try {
-      return await User.findByPk(id);
+      // Fetch the user from the database
+      const user = await User.findByPk(id);
+      return user;
     } catch (error) {
       console.error('Failed to get user by ID:', error);
       throw new Error('Failed to get user by ID');
@@ -47,14 +49,31 @@ class UserRepository {
   }
 
   async updateUserProfilePicture(id, profileImage) {
-    await User.update({
-      profile_image: profileImage
-    }, {
-      where: {
-        id
+    try {
+      console.log('Update Profile Picture ID:', id);
+      console.log('Profile Image:', profileImage);
+
+      const updatedRows = await User.update({
+        profile_image: profileImage
+      }, {
+        where: {
+          id
+        }
+      });
+
+      console.log('Updated Rows:', updatedRows);
+
+      if (updatedRows > 0) {
+        return true;
+      } else {
+        throw new Error('Failed to update profile picture');
       }
-    });
+    } catch (error) {
+      console.error('Failed to update profile picture:', error);
+      throw new Error('Failed to update profile picture');
+    }
   }
+
 
 }
 

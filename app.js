@@ -1,12 +1,16 @@
 require('dotenv').config();
+
 const express = require("express");
 const bodyParser = require('body-parser');
 const db = require("./src/models");
 
+<<<<<<< HEAD
 const connectToRedis=require('./src/config/redisConnection');
 const redisClient =connectToRedis();
 
 
+=======
+>>>>>>> 8e48a21f5a4121f3c20ed3ffe90d3e3354a30831
 const userRoutes = require('./src/routes/userRoutes');
 
 const app = express();
