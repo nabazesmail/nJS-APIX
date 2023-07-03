@@ -114,7 +114,7 @@ class UserController {
 
       const picPath=path.join(__dirname, '..', 'public/img', profilePicture);
       console.log(picPath);
-      const serverUrl = "http://localhost:3000/public/img/";
+      const serverUrl = "http://localhost:3000/public";
       // Send the image file in the response
       res.status(200).json({
         path: serverUrl + profilePicture,

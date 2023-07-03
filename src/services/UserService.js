@@ -1,5 +1,7 @@
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
+const connectToRedis = require('../config/redisConnection');
+
 const path = require('path');
 const {
   sequelize,
@@ -8,6 +10,11 @@ const {
 } = require('../models');
 
 class UserService {
+
+  constructor() {
+    this.redisClient = connectToRedis();
+  }
+
   async createUser(data) {
     let transaction;
 
@@ -40,12 +47,35 @@ class UserService {
   }
 
   async getUserById(id) {
-    try {
-      return await userRepository.getUserById(id);
-    } catch (error) {
-      console.error('Failed to get user by ID:', error);
-      throw new Error('Failed to get user by ID');
-    }
+    return new Promise((resolve, reject) => {
+      // Check if user data is cached in Redis
+      this.redisClient.get(`user:${id}`, async (err, cachedData) => {
+        if (err) {
+          console.error('Failed to fetch user from Redis cache:', err);
+        }
+
+        // If cached data exists, return it
+        if (cachedData) {
+          const user = JSON.parse(cachedData);
+          console.log('Fetched user from Redis cache:', user);
+          resolve(user);
+        } else {
+          try {
+            // Retrieve user data from the database
+            const user = await userRepository.getUserById(id);
+
+            // Cache the user data in Redis
+            this.redisClient.set(`user:${id}`, JSON.stringify(user));
+
+            console.log('Fetched user from database:', user);
+            resolve(user);
+          } catch (error) {
+            console.error('Failed to get user by ID:', error);
+            reject(new Error('Failed to get user by ID'));
+          }
+        }
+      });
+    });
   }
 
   async getUsers() {
@@ -89,6 +119,7 @@ class UserService {
       throw new Error('Failed to login');
     }
   }
+
 
   async uploadProfilePicture(id, file) {
     try {
