@@ -1,4 +1,3 @@
-require('dotenv').config();
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
 const connectToRedis = require('../config/redisConnection');
@@ -78,7 +77,7 @@ class UserService {
     });
   }
 
-  async getUsers(resetCache = true) {
+  async getUsers(resetCache = false) {
     const cacheKey = 'users';
 
     try {
