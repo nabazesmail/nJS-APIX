@@ -1,8 +1,8 @@
+require('dotenv').config();
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
 const connectToRedis = require('../config/redisConnection');
 
-const path = require('path');
 const {
   sequelize,
   User,
@@ -78,7 +78,7 @@ class UserService {
     });
   }
 
-  async getUsers(resetCache = false) {
+  async getUsers(resetCache = true) {
     const cacheKey = 'users';
 
     try {
@@ -88,7 +88,8 @@ class UserService {
       }
 
       // Check if the users are available in the Redis cache
-      const cachedUsers = await this.redisClient.get(cacheKey);
+      let cachedUsers = await this.redisClient.get(cacheKey);
+
       if (cachedUsers) {
         console.log('Fetched users from cache');
         return JSON.parse(cachedUsers);
@@ -119,21 +120,8 @@ class UserService {
       });
 
       // Update the user data in the cache
-      this.redisClient.get(`user:${id}`, (err, cachedData) => {
-        if (err) {
-          console.error('Failed to fetch user from Redis cache:', err);
-        }
-
-        if (cachedData) {
-          const cachedUser = JSON.parse(cachedData);
-          // Update the cached user data with the updated data
-          const updatedUser = {
-            ...cachedUser,
-            ...data
-          };
-          this.redisClient.set(`user:${id}`, JSON.stringify(updatedUser));
-        }
-      });
+      const cacheKey = `user:${id}`;
+      await this.redisClient.set(cacheKey, JSON.stringify(user));
 
       await transaction.commit();
 
