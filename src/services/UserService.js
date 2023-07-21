@@ -134,7 +134,6 @@ class UserService {
     }
   }
 
-
   async deleteUser(id) {
     try {
       // Clear user cache for the deleted user
@@ -171,7 +170,6 @@ class UserService {
       throw new Error('Failed to login');
     }
   }
-
 
   async uploadProfilePicture(id, file) {
     try {

@@ -28,7 +28,10 @@ node_modules/
 __pycache__/
 venv/
 *.env
+.jshintric
 
 # Ignore configuration files
 config.py
 config.json
+package.json
+package-lock.json
