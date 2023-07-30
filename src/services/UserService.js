@@ -185,7 +185,6 @@ class UserService {
     }
   }
 
-
   async uploadProfilePicture(id, file) {
     try {
       // Validate file
