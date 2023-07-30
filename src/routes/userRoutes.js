@@ -7,6 +7,8 @@ const checkAccess = require('../middleware/checkAccess');
 const upload = require('../middleware/multerConfig');
 const router = express.Router();
 
+// Route for inserting data into the table
+router.post('/register', userController.createUser);
 
 // Route for logging in
 router.post('/login', userController.login);
@@ -32,8 +34,6 @@ router.get('/profile-pic-path/:userId',userController.getProfilePicPath);
 // Route for removing profile picture
 router.delete('/remove-pic/:userId', checkAccess('admin'), userController.removeProfilePicture);
 
-// Route for inserting data into the table
-router.post('/users', checkAccess('admin'), userController.createUser);
 
 // Route for getting one user by id
 router.get('/users/:id', checkAccess('user'), userController.getUserById);

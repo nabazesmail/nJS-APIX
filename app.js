@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require("express");
 const bodyParser = require('body-parser');
 const db = require("./src/models");
-
+const {resetCache}=require('./src/config/redisConnection');
 
 const userRoutes = require('./src/routes/userRoutes');
 
@@ -12,6 +12,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 
+// resetCache();    //unComment this to reset the cache
 
 app.use('/api', userRoutes);
 

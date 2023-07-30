@@ -29,5 +29,20 @@ function connectToRedis() {
   return redis;
 }
 
+ function resetCache() {
+  const redisClient = connectToRedis();
 
-module.exports = connectToRedis;
+  try {
+    // Clear all keys from database 0 (cache database)
+     redisClient.flushdb();
+    console.log('Cache reset successful');
+  } catch (error) {
+    console.error('Error resetting cache:', error);
+  } finally {
+    // Close the Redis connection after resetting the cache
+    redisClient.quit();
+  }
+}
+
+
+module.exports = {connectToRedis,resetCache};

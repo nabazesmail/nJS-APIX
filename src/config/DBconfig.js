@@ -9,7 +9,8 @@ module.exports = {
     dialect: "mysql",
     logging: (query) => {
       console.log('SQL Query:', query);
-    }
+    },
+    alter: process.env.AUTO_MIGRATION,
   },
   test: {
     username: process.env.DB_USER,
@@ -19,7 +20,8 @@ module.exports = {
     dialect: "mysql",
     logging: (query) => {
       console.log('SQL Query:', query);
-    }
+    },
+    alter: process.env.AUTO_MIGRATION,
   },
   production: {
     username: process.env.DB_USER,
@@ -29,6 +31,7 @@ module.exports = {
     dialect: "mysql",
     logging: (query) => {
       console.log('SQL Query:', query);
-    }
+    },
+    alter: process.env.AUTO_MIGRATION,
   }
 };

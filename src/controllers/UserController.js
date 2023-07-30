@@ -1,6 +1,8 @@
 const UserService = require('../services/UserService');
 const userService = new UserService();
-const {getUserInfoFromToken} = require('../middleware/authenticate');
+const {
+  getUserInfoFromToken
+} = require('../middleware/authenticate');
 const path = require('path');
 
 const {
@@ -35,23 +37,33 @@ class UserController {
   }
 
   async login(req, res) {
-    const user = await userService.login(req.body.email, req.body.password);
-    if (!user) {
-      res.sendStatus(401);
-      return;
+    const {
+      email,
+      password
+    } = req.body;
+
+    try {
+      const user = await userService.login(email, password);
+      if (!user) {
+        res.sendStatus(401);
+        return;
+      }
+
+      const token = generateToken({
+        id: user.id,
+        role: user.role,
+        fullName: user.full_name,
+        email: user.email,
+        profileImage: user.profile_image
+      });
+
+      res.json({
+        token
+      });
+    } catch (error) {
+      console.error('Error during login:', error);
+      res.sendStatus(500);
     }
-
-    const token = generateToken({
-      id: user.id,
-      role: user.role,
-      fullName: user.full_name,
-      email: user.email,
-      profileImage: user.profile_image
-    });
-
-    res.json({
-      token
-    });
   }
 
   async uploadProfilePicture(req, res) {
@@ -81,14 +93,18 @@ class UserController {
       const profilePicture = await userService.getProfilePicture(userId);
 
       if (!profilePicture) {
-        return res.status(404).json({ message: 'Profile picture not found' });
+        return res.status(404).json({
+          message: 'Profile picture not found'
+        });
       }
 
       const absolutePath = path.join(__dirname, '..', 'public/img', profilePicture);
       res.sendFile(absolutePath);
     } catch (error) {
       console.error('Error getting profile picture:', error);
-      res.status(500).json({ error: 'Failed to get profile picture' });
+      res.status(500).json({
+        error: 'Failed to get profile picture'
+      });
     }
   }
 
@@ -112,7 +128,7 @@ class UserController {
         });
       }
 
-      const picPath=path.join(__dirname, '..', 'public/img', profilePicture);
+      const picPath = path.join(__dirname, '..', 'public/img', profilePicture);
       console.log(picPath);
       const serverUrl = "http://localhost:3000/public";
       // Send the image file in the response

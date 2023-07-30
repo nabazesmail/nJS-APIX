@@ -1,6 +1,9 @@
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
-const connectToRedis = require('../config/redisConnection');
+const {
+  connectToRedis
+} = require('../config/redisConnection');
+const bcrypt = require('bcrypt');
 
 const {
   sequelize,
@@ -56,7 +59,7 @@ class UserService {
         // If cached data exists, return it
         if (cachedData) {
           const user = JSON.parse(cachedData);
-          console.log('Fetched user from Redis cache:', user);
+          console.log('Fetched user from Redis cache:');
           resolve(user);
         } else {
           try {
@@ -66,7 +69,7 @@ class UserService {
             // Cache the user data in Redis
             this.redisClient.set(`user:${id}`, JSON.stringify(user));
 
-            console.log('Fetched user from database:', user);
+            console.log('Fetched user from database:');
             resolve(user);
           } catch (error) {
             console.error('Failed to get user by ID:', error);
@@ -134,7 +137,6 @@ class UserService {
     }
   }
 
-
   async deleteUser(id) {
     try {
       // Clear user cache for the deleted user
@@ -149,6 +151,7 @@ class UserService {
 
   async login(email, password) {
     const cacheKey = `user:${email}`;
+    const cacheExpirationSeconds = 900; // 15 minutes (900 seconds)
 
     try {
       // Check if the user is available in the Redis cache
@@ -161,8 +164,18 @@ class UserService {
       // If not available in cache, fetch the user from the database
       const user = await userRepository.getUserByEmail(email);
 
-      // Cache the user in Redis
-      await this.redisClient.set(cacheKey, JSON.stringify(user));
+      if (!user) {
+        return null; // User not found, return null
+      }
+
+      // Validate the password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return null; // Incorrect password, return null
+      }
+
+      // Cache the user in Redis with a 15-minute expiration (900 seconds)
+      await this.redisClient.set(cacheKey, JSON.stringify(user), 'EX', cacheExpirationSeconds);
 
       console.log('Fetched user from database for Login');
       return user;
