@@ -12,17 +12,19 @@ function connectToRedis() {
   // Create a new Redis client with options
   const redis = new Redis(redisOptions);
 
-  // Connect to Redis
-  redis.on('connect', () => {
+   // Connect to Redis
+   redis.on('connect', () => {
     console.log('Connected to Redis');
   });
 
-  // Ping Redis server
-  redis.ping((err, result) => {
-    if (err) {
-      console.error('Error pinging Redis:', err);
-    } else {
-      console.log('Redis ping result:', result);
+  // Flag to track whether the connection error has been logged
+  let connectionErrorLogged = false;
+
+  // Handle Redis connection error
+  redis.on('error', (err) => {
+    if (!connectionErrorLogged) {
+      console.error('Redis client failed to connect:', err);
+      connectionErrorLogged = true;
     }
   });
 
