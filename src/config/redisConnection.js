@@ -12,8 +12,8 @@ function connectToRedis() {
   // Create a new Redis client with options
   const redis = new Redis(redisOptions);
 
-  // Connect to Redis
-  redis.on('connect', () => {
+   // Connect to Redis
+   redis.on('connect', () => {
     console.log('Connected to Redis');
   });
 
