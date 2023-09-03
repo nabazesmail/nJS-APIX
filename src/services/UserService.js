@@ -1,18 +1,10 @@
 const UserRepository = require('../repositories/UserRepository');
 const userRepository = new UserRepository();
-const {
-  connectToRedis
-} = require('../config/redisConnection');
+const { connectToRedis, setKeyWithTimeout } = require('../config/redisConnection'); // Import the setKeyWithTimeout function
 const bcrypt = require('bcrypt');
-
-const {
-  sequelize,
-  User,
-  Details
-} = require('../models');
+const { sequelize, User, Details } = require('../models');
 
 class UserService {
-
   constructor() {
     this.redisClient = connectToRedis();
   }
@@ -38,6 +30,10 @@ class UserService {
 
       await transaction.commit();
 
+      // Cache the user data in Redis with a 10-minute timeout
+      const cacheKey = `user:${user.id}`;
+      await setKeyWithTimeout(cacheKey, JSON.stringify(user), 600);
+
       return user;
     } catch (error) {
       if (transaction) {
@@ -50,24 +46,23 @@ class UserService {
 
   async getUserById(id) {
     return new Promise((resolve, reject) => {
-      // Check if user data is cached in Redis
-      this.redisClient.get(`user:${id}`, async (err, cachedData) => {
+      const cacheKey = `user:${id}`;
+
+      this.redisClient.get(cacheKey, async (err, cachedData) => {
         if (err) {
           console.error('Failed to fetch user from Redis cache:', err);
         }
 
-        // If cached data exists, return it
         if (cachedData) {
           const user = JSON.parse(cachedData);
           console.log('Fetched user from Redis cache:');
           resolve(user);
         } else {
           try {
-            // Retrieve user data from the database
             const user = await userRepository.getUserById(id);
 
-            // Cache the user data in Redis
-            this.redisClient.set(`user:${id}`, JSON.stringify(user));
+            // Cache the user data in Redis with a 10-minute timeout
+            await setKeyWithTimeout(cacheKey, JSON.stringify(user), 600);
 
             console.log('Fetched user from database:');
             resolve(user);
@@ -84,12 +79,10 @@ class UserService {
     const cacheKey = 'users';
 
     try {
-      // If resetCache is true, delete the users cache
       if (resetCache) {
         await this.redisClient.del(cacheKey);
       }
 
-      // Check if the users are available in the Redis cache
       let cachedUsers = await this.redisClient.get(cacheKey);
 
       if (cachedUsers) {
@@ -97,10 +90,8 @@ class UserService {
         return JSON.parse(cachedUsers);
       }
 
-      // If not available in cache, fetch the users from the database
       const users = await userRepository.getUsers();
 
-      // Cache the users in Redis
       await this.redisClient.set(cacheKey, JSON.stringify(users));
 
       console.log('Fetched users from database');
@@ -121,9 +112,8 @@ class UserService {
         transaction
       });
 
-      // Update the user data in the cache
       const cacheKey = `user:${id}`;
-      await this.redisClient.set(cacheKey, JSON.stringify(user));
+      await setKeyWithTimeout(cacheKey, JSON.stringify(user), 600);
 
       await transaction.commit();
 
@@ -139,7 +129,6 @@ class UserService {
 
   async deleteUser(id) {
     try {
-      // Clear user cache for the deleted user
       await this.redisClient.del(`user:${id}`);
 
       await userRepository.deleteUser(id);
@@ -154,28 +143,26 @@ class UserService {
     const cacheExpirationSeconds = 900; // 15 minutes (900 seconds)
 
     try {
-      // Check if the user is available in the Redis cache
       const cachedUser = await this.redisClient.get(cacheKey);
+
       if (cachedUser) {
         console.log('Fetched user from cache for Login');
         return JSON.parse(cachedUser);
       }
 
-      // If not available in cache, fetch the user from the database
       const user = await userRepository.getUserByEmail(email);
 
       if (!user) {
-        return null; // User not found, return null
+        return null;
       }
 
-      // Validate the password
       const isPasswordValid = await bcrypt.compare(password, user.password);
+
       if (!isPasswordValid) {
-        return null; // Incorrect password, return null
+        return null;
       }
 
-      // Cache the user in Redis with a 15-minute expiration (900 seconds)
-      await this.redisClient.set(cacheKey, JSON.stringify(user), 'EX', cacheExpirationSeconds);
+      await setKeyWithTimeout(cacheKey, JSON.stringify(user), cacheExpirationSeconds);
 
       console.log('Fetched user from database for Login');
       return user;
@@ -187,7 +174,6 @@ class UserService {
 
   async uploadProfilePicture(id, file) {
     try {
-      // Validate file
       if (!file || !file.filename) {
         throw new Error('Invalid file');
       }

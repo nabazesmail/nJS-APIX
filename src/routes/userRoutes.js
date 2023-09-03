@@ -10,9 +10,6 @@ const router = express.Router();
 // Route for inserting data into the table
 router.post('/register', userController.createUser);
 
-// Route for inserting data into the table
-router.post('/users', userController.createUser);
-
 // Route for logging in
 router.post('/login', userController.login);
 
